@@ -13,8 +13,10 @@ ADD SaleDateConverted date
 UPDATE NashvilleHousing
 SET SaleDateConverted = CONVERT (date , SaleDate)
 
+	
 ----------------
 
+	
 --2) Property Address
 
 SELECT *
@@ -22,36 +24,38 @@ FROM PortfolioProject..NashvilleHousing
 WHERE PropertyAddress is NULL
 ORDER BY ParcelID
 
-SELECT a.ParcelID, a.PropertyAddress, b.ParcelID, b.PropertyAddress, ISNULL (a.PropertyAddress, b.PropertyAddress)      -- if Property address is null, populate it w/ property address b 
-FROM PortfolioProject..NashvilleHousing AS a																			-- joinself the table to check if two similar parcel IDs have the same property address
+SELECT a.ParcelID, a.PropertyAddress, b.ParcelID, b.PropertyAddress, ISNULL (a.PropertyAddress, b.PropertyAddress)      -- if the Property address is null, populate it w/ property address b 
+FROM PortfolioProject..NashvilleHousing AS a										-- join the table to itself to check if two similar parcel IDs have the same property address
 JOIN PortfolioProject..NashvilleHousing AS b             
-	ON a.ParcelID = b.ParcelID																							-- if Parcel ID are the same with different unique ID, display them in a table to check what parcel IDs have null property addresses 
+	ON a.ParcelID = b.ParcelID										 	-- If Parcel IDs are the same with different unique IDs, display them in a table to check what parcel IDs have null property addresses 
 	AND a.[UniqueID ] <> b.[UniqueID ]                         
-WHERE a.PropertyAddress is NULL																							--Display Parcel IDs with null property addresses 
+WHERE a.PropertyAddress is NULL												--Display Parcel IDs with null property addresses 
 
 UPDATE a																												-- Update Table a 
-SET PropertyAddress = ISNULL (a.PropertyAddress, b.PropertyAddress)														-- in property address of table a, replace the null values by the property addresses of table b 
+SET PropertyAddress = ISNULL (a.PropertyAddress, b.PropertyAddress)							-- in the property address of table a, replace the null values with the property addresses of table b 
 FROM PortfolioProject..NashvilleHousing AS a
 JOIN PortfolioProject..NashvilleHousing AS b             
 	ON a.ParcelID = b.ParcelID                                 
 	AND a.[UniqueID ] <> b.[UniqueID ] 
 WHERE a.PropertyAddress is NULL
 
+	
 ----------------
 
---3) Breaking out address into individual columns (Adress, City, State)
+	
+--3) Breaking out address into individual columns (Address, City, State)
 --3-a) Property address
 
 SELECT 
-SUBSTRING(PropertyAddress, 1, CHARINDEX(',',PropertyAddress)-1) AS Address,									            -- starting position is the first position and going until the position before the comma
+SUBSTRING(PropertyAddress, 1, CHARINDEX(',',PropertyAddress)-1) AS Address,					        -- starting position is the first position and going until the position before the comma
 SUBSTRING(PropertyAddress, CHARINDEX(',',PropertyAddress)+1 , LEN(PropertyAddress)) AS Address                          -- starting position is one position after the comma and going until the end of the string 
-FROM PortfolioProject..NashvilleHousing																	   		        -- charindex gives the position of a requested value, here the comma
+FROM PortfolioProject..NashvilleHousing											-- char index gives the position of a requested value, here the comma
 
 
 ALTER TABLE NashvilleHousing                                                                                            -- creates a new column in the original table
 ADD Property_Split_Address nvarchar(255)
 
-UPDATE NashvilleHousing																	            	                -- adds the values to the created column
+UPDATE NashvilleHousing						                                                        -- adds the values to the created column
 SET Property_Split_Address = SUBSTRING(PropertyAddress, 1, CHARINDEX(',',PropertyAddress)-1)
 
 ALTER TABLE NashvilleHousing
@@ -60,7 +64,8 @@ ADD Property_Split_City nvarchar(255)
 UPDATE NashvilleHousing
 SET Property_Split_City = SUBSTRING(PropertyAddress, CHARINDEX(',',PropertyAddress)+1 , len (PropertyAddress))	
 
-
+----------------
+	
 --3-b) Owner Address
 --1st method (complex)
 
@@ -77,7 +82,7 @@ SELECT
 PARSENAME(REPLACE (OwnerAddress,',','.'),3),                                                         --Parsename looks for periods and not comma
 PARSENAME(REPLACE (OwnerAddress,',','.'),2),  
 PARSENAME(REPLACE (OwnerAddress,',','.'),1)  
-FROM PortfolioProject..NashvilleHousing                                                              --Repalce commas with periods 
+FROM PortfolioProject..NashvilleHousing                                                              --Replace commas with periods 
 
 ALTER TABLE NashvilleHousing      
 ADD Owner_Split_Address nvarchar(255)
@@ -97,12 +102,14 @@ ADD Owner_Split_State nvarchar(255)
 UPDATE NashvilleHousing  
 SET Owner_Split_State = PARSENAME(REPLACE (OwnerAddress,',','.'),1)
 
+	
 ----------------
 
---4) Change Y and N to Yes and No in "Sold as Vacant" field
+	
+--4) Change Y and N to Yes and No in the "Sold as Vacant" field
 
 SELECT DISTINCT (SoldAsVacant), COUNT(SoldAsVacant)  AS Count                                   -- use distinct to see if they are using other connotations than yes or no 
-FROM PortfolioProject..NashvilleHousing                                                         -- use count to see how many of each connotations there are 
+FROM PortfolioProject..NashvilleHousing                                                         -- use count to see how many of each connotation there are 
 GROUP BY SoldAsVacant
 ORDER BY Count
 
@@ -117,13 +124,15 @@ FROM PortfolioProject..NashvilleHousing
 
 UPDATE NashvilleHousing
 SET SoldAsvacant = CASE 
-						WHEN SoldAsVacant = 'Y' THEN 'Yes'
-						WHEN SoldAsVacant = 'N' THEN 'No'
-						ELSE SoldAsvacant
-			       END
+			WHEN SoldAsVacant = 'Y' THEN 'Yes'
+			WHEN SoldAsVacant = 'N' THEN 'No'
+			ELSE SoldAsvacant
+		   END
 
+	
 ----------------
 
+	
 --5) Remove Duplicates
 
 WITH RowNumCTE AS (
@@ -137,8 +146,10 @@ FROM RowNumCTE
 WHERE row_num > 1 
 ORDER BY PropertyAddress
 
+	
 ----------------
 
+	
 --6) Delete Unused Columns
 
 SELECT *
